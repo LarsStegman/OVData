@@ -11,6 +11,22 @@ There is a database server that can be started using the Dockerfile. To import t
 
 The API endpoint can be started by running `flask run` with environment variable `FLASK_APP=/backend/server/APIServer.py`.
 
+The docker command with the needed mounts:
+
+```bash
+docker run
+    -p 5432:5432
+    -v /ovdata/data/database:/var/lib/postgresql/data
+    -v /ovdata/data/kv1:/ovdata-source
+    -v /ovdata/src/database:/database-scripts
+    -v /ovdata/src:/backend
+    --env POSTGRES_USER=<USER>
+    --env POSTGRES_PASS=<PASSWORD>
+    --env POSTGRES_DBNAME=ovdata_db
+    --env ALLOW_IP_RANGE=0.0.0.0/0
+    --name ovdata-container
+```
+
 ## Endpoints
 
 
