@@ -3,4 +3,4 @@ RUN apt-get update
 RUN apt-get -y install python3 python3-pip
 COPY requirements.txt /conf/requirements.txt
 RUN pip3 install -r /conf/requirements.txt
-COPY backend/database/z0_init.sql /docker-entrypoint-initdb.d/
+COPY src/database/z0_init.sql /docker-entrypoint-initdb.d/

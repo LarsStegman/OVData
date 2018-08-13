@@ -38,7 +38,7 @@ docker run
     * `long`: longitude
     * `r`: maximum radius in meteres (max 5000m)
     * `limit`: The maximum number of stops returned (max 200)
-* Returns: A JSON object with stops grouped in stop areas stop areas.
+* Returns: A JSON object with stops.
 
 Example request:
 
