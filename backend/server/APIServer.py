@@ -16,10 +16,11 @@ def hello():
 
 @app.route("/stops/near")
 def stops_near():
-    long = request.args.get('long')
-    lat = request.args.get('lat')
-    max_radius = request.args.get('r')
-    max_items = request.args.get('max_items')
+    request_params = request.args
+    long = request_params.get('long')
+    lat = request_params.get('lat')
+    max_radius = request_params.get('r')
+    max_items = request_params.get('max_items')
 
     try:
         long = float(long)
