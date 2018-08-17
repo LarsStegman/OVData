@@ -1,6 +1,6 @@
 \i database-scripts/connect.sql;
 
-CREATE TABLE temp_stops AS TABLE stops;
+CREATE TABLE temp_stops AS TABLE user_stops;
 
 
 COPY temp_stops FROM :data
@@ -12,7 +12,10 @@ WITH (FORMAT CSV,
 UPDATE temp_stops SET stop_side_code=NULL WHERE stop_side_code = '-';
 UPDATE temp_stops SET timing_point_code=user_stop_code WHERE timing_point_code=NULL;
 
-INSERT INTO stops (SELECT * FROM temp_stops)
+UPDATE temp_stops SET description=NULL WHERE description=upper(name);
+UPDATE temp_stops SET description=NULL WHERE description='Onbekend';
+
+INSERT INTO user_stops (SELECT * FROM temp_stops)
   ON CONFLICT ON CONSTRAINT data_owner_user_stop_codes_pk DO UPDATE
     SET
       timing_point_code=EXCLUDED.timing_point_code,

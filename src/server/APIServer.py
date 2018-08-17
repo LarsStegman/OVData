@@ -9,6 +9,7 @@ app = Flask(__name__)
 api = API.API()
 
 
+
 @app.route("/")
 def hello():
     return "Hello world!"
@@ -42,3 +43,6 @@ def json_response(value):
 
 def argument_error():
     return app.response_class(status=400)
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0')
