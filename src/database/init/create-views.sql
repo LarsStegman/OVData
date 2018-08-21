@@ -29,6 +29,7 @@ CREATE INDEX stops_location_idx ON stops USING gist (location);
 CREATE INDEX stops_name_idx ON stops (name);
 CREATE INDEX stops_code_idx ON stops (data_owner_code, user_stop_code);
 
+
 CREATE MATERIALIZED VIEW lines_at_stop AS
     SELECT DISTINCT
     line.data_owner_code, stops.user_stop_code, stops.user_stop_area_code, line.line_planning_number, line.line_public_number, line.line_name,
@@ -36,7 +37,7 @@ CREATE MATERIALIZED VIEW lines_at_stop AS
     d2.dest_code, d2.dest_name_full, d2.dest_name_main, d2.dest_name_detail,
     d2.relevant_dest_name_detail, d2.dest_name_main_21, d2.dest_name_detail_21,
     d2.dest_name_main_19, d2.dest_name_detail_19, d2.dest_name_main_16,
-    d2.dest_name_detail_16 as destination
+    d2.dest_name_detail_16
     FROM line
     INNER JOIN journey_pattern AS jopa
         ON jopa.data_owner_code = line.data_owner_code AND
