@@ -1,9 +1,15 @@
 CREATE MATERIALIZED VIEW stops AS
   SELECT DISTINCT f.data_owner_code, f.user_stop_code,
                   replace(f.name, (f.town || ', '), '') AS name, f.town,
-                  f.stop_side_code, f.description, f.user_stop_type, f.user_stop_area_code,
+                  f.stop_side_code, f.description, f.user_stop_type,
+                  f.user_stop_area_code,
+                  replace(sa.name, (sa.town || ', '), '') AS stop_area_name,
                   point.physical_location as location
     FROM user_stops AS f
+    INNER JOIN stop_areas AS sa
+      ON f.data_owner_code = sa.data_owner_code AND
+        f.user_stop_area_code = sa.user_stop_area_code
+
     INNER JOIN timing_link AS tl
       ON f.data_owner_code = tl.data_owner_code AND
          f.user_stop_code = tl.user_stop_code_begin
@@ -29,10 +35,9 @@ CREATE INDEX stops_location_idx ON stops USING gist (location);
 CREATE INDEX stops_name_idx ON stops (name);
 CREATE INDEX stops_code_idx ON stops (data_owner_code, user_stop_code);
 
-
 CREATE MATERIALIZED VIEW lines_at_stop AS
     SELECT DISTINCT
-    line.data_owner_code, stops.user_stop_code, stops.user_stop_area_code, line.line_planning_number, line.line_public_number, line.line_name,
+    stops.data_owner_code, stops.user_stop_code, stops.user_stop_area_code, line.line_planning_number, line.line_public_number, line.line_name,
     line.transport_type,
     d2.dest_code, d2.dest_name_full, d2.dest_name_main, d2.dest_name_detail,
     d2.relevant_dest_name_detail, d2.dest_name_main_21, d2.dest_name_detail_21,

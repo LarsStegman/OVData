@@ -38,8 +38,9 @@ class API:
 
         :param long: the longitude (x)
         :param lat: the latitide (y)
-        :return: A list of dictionaries containing the stops data.
+        :return: A dictionary of stop areas with the stops inside them
         """
+        # TODO: Stops that are not in stop areas exist!
         closest_stops = self.db.dict_query(closest_stops_query, {
                 'long': long,
                 'lat': lat,
@@ -47,10 +48,22 @@ class API:
                 'max_items': max_items
         })
 
+        result = {}
         for stop in closest_stops:
             stop['location'] = ast.literal_eval(stop['location'])
+            stop_area_code = stop['user_stop_area_code']
+            if result.get(stop_area_code) is None:
+                result[stop_area_code] = {
+                    'data_owner_code': stop['data_owner_code'],
+                    'stop_area_code': stop_area_code,
+                    'name': stop['stop_area_name'],
+                    'town': stop['town'],
+                    'stops': []
+                }
 
-        return closest_stops
+            result.get(stop_area_code).get('stops').append(stop)
+
+        return list(result.values())
 
 
     def lines_at_stop(self, data_owner_code, stop_code):
@@ -98,24 +111,25 @@ class API:
 
             lines_at_stop_arr = result[stop_code]
             line['destination'] = {
+                'data_owner_code': line['data_owner_code'],
                 'code': line.pop('dest_code'),
                 'name': {
                     'full': line.pop('dest_name_full'),
-                    24: {
-                        'main': line.pop('dest_name_main'),
+                    'main': {
+                        'name': line.pop('dest_name_main'),
                         'detail': line.pop('dest_name_detail'),
                         'always_show_detail': line.pop('relevant_dest_name_detail')
                     },
                     21: {
-                        'main': line.pop('dest_name_main_21'),
+                        'name': line.pop('dest_name_main_21'),
                         'detail': line.pop('dest_name_detail_21')
                     },
                     19: {
-                        'main': line.pop('dest_name_main_19'),
+                        'name': line.pop('dest_name_main_19'),
                         'detail': line.pop('dest_name_detail_19')
                     },
                     16: {
-                        'main': line.pop('dest_name_main_16'),
+                        'name': line.pop('dest_name_main_16'),
                         'detail': line.pop('dest_name_detail_16')
                     },
                 }
@@ -123,5 +137,5 @@ class API:
 
             lines_at_stop_arr.append(line)
 
-        return result
+        return list(result.values())
 
