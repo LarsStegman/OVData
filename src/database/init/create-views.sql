@@ -1,9 +1,9 @@
 CREATE MATERIALIZED VIEW stops AS
   SELECT DISTINCT f.data_owner_code, f.user_stop_code,
-                  replace(f.name, (f.town || ', '), '') AS name, f.town,
+                  remove_trailing_leading(f.name, f.town) AS name, f.town,
                   f.stop_side_code, f.description, f.user_stop_type,
                   f.user_stop_area_code,
-                  replace(sa.name, (sa.town || ', '), '') AS stop_area_name,
+                  remove_trailing_leading(sa.name, sa.town) AS stop_area_name,
                   point.physical_location as location
     FROM user_stops AS f
     INNER JOIN stop_areas AS sa
@@ -61,3 +61,75 @@ CREATE MATERIALIZED VIEW lines_at_stop AS
 
 CREATE INDEX ON lines_at_stop (data_owner_code, user_stop_code);
 CREATE INDEX ON lines_at_stop (data_owner_code, user_stop_area_code);
+
+\i database-scripts/init/views/create-time-demand-runtime-group-views.sql
+\i database-scripts/init/views/create-passtimes-views.sql
+
+CREATE MATERIALIZED VIEW departure_times AS
+(
+  SELECT data_owner_code,
+         line_planning_number,
+         journey_number,
+         stop_order,
+         journey_pattern_code,
+         user_stop_code,
+         target_arrival_time,
+         target_departure_time
+  FROM tdg_public_journey_pass
+  UNION
+  SELECT data_owner_code,
+         line_planning_number,
+         journey_number,
+         stop_order,
+         journey_pattern_code,
+         user_stop_code,
+         target_arrival_time,
+         target_departure_time
+  FROM pass_departures
+);
+
+CREATE INDEX ON departure_times (data_owner_code, line_planning_number,
+                                 journey_pattern_code);
+CREATE INDEX ON departure_times (data_owner_code, user_stop_code);
+CREATE INDEX ON departure_times (target_arrival_time);
+CREATE INDEX ON departure_times (target_departure_time);
+
+CREATE MATERIALIZED VIEW line_departure_times AS
+SELECT dt.*,
+       s.user_stop_area_code,
+       l.line_public_number,
+       l.line_name,
+       l.transport_type,
+
+       d2.dest_code,
+       d2.dest_name_full,
+       d2.dest_name_main,
+       d2.dest_name_detail,
+       d2.relevant_dest_name_detail,
+       d2.dest_name_main_21,
+       d2.dest_name_detail_21,
+       d2.dest_name_main_19,
+       d2.dest_name_detail_19,
+       d2.dest_name_main_16,
+       d2.dest_name_detail_16
+FROM departure_times dt
+
+INNER JOIN journey_pattern_timing_link link
+         on dt.data_owner_code = link.data_owner_code and
+            dt.line_planning_number = link.line_planning_number and
+            dt.journey_pattern_code = link.journey_pattern_code and
+            dt.stop_order + 1 = link.timing_link_order
+INNER JOIN destination d2
+         on link.data_owner_code = d2.data_owner_code and
+            link.dest_code = d2.dest_code
+INNER JOIN line l
+         on dt.data_owner_code = l.data_owner_code and
+            dt.line_planning_number = l.line_planning_number
+INNER JOIN user_stops s
+         ON s.data_owner_code = dt.data_owner_code AND
+            s.user_stop_code = dt.user_stop_code;
+
+CREATE INDEX ON line_departure_times (data_owner_code, user_stop_code);
+CREATE INDEX ON line_departure_times (data_owner_code, user_stop_area_code);
+REFRESH MATERIALIZED VIEW departure_times;
+REFRESH MATERIALIZED VIEW line_departure_times;
