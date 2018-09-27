@@ -42,3 +42,15 @@ SELECT * FROM lines_at_stop
     WHERE data_owner_code=%(data_owner_code)s 
         AND user_stop_area_code=%(stop_area_code)s;
 """)
+
+"""
+Retrieves the departures at a stop.
+"""
+departures_at_stop = sql.SQL("""
+SELECT * FROM line_departure_times
+WHERE data_owner_code=%(data_owner_code)s
+    AND user_stop_code=%(user_stop_code)s
+    AND target_departure_time >= current_date 
+    ORDER BY target_departure_time
+    LIMIT 30;
+""")

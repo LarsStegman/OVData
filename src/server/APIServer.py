@@ -1,4 +1,5 @@
 import json
+import datetime
 from flask import Flask
 from flask import request
 from flask import Response
@@ -9,9 +10,13 @@ app = Flask(__name__)
 api = API.API()
 
 
+def convert_date(o):
+    if isinstance(o, datetime.datetime):
+        return o.timestamp()
+
 
 def json_response(value):
-    return Response(json.dumps(value), mimetype='text/json')
+    return Response(json.dumps(value, default=convert_date), mimetype='text/json')
 
 
 def argument_error():
@@ -59,6 +64,15 @@ def lines_in_stop_area():
     data_owner = request_params.get('data_owner_code')
     stop_area_code = request_params.get('stop_area_code')
     result = api.lines_in_stop_area(data_owner, stop_area_code)
+    return json_response(result)
+
+
+@app.route("/departures/stop")
+def departures_at_stop():
+    request_params = request.args
+    data_owner = request_params.get('data_owner_code')
+    stop_code = request_params.get('stop_code')
+    result = api.departures_at_stop(data_owner, stop_code)
     return json_response(result)
 
 

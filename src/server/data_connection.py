@@ -20,13 +20,14 @@ class Database:
         Initiates a connection with the database.
         """
         try:
-            return psycopg2.connect("""
+            connect = psycopg2.connect("""
                 dbname=ovdata_db 
                 user=larsstegman 
                 host=localhost 
                 password=password
             """)
-        except:
+            return connect
+        except Exception as e:
             return ConnectionError()
 
     def init_dict_cursor(self):

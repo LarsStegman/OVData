@@ -1,7 +1,8 @@
 import ast
 
 from server.data_connection import Database
-from server.queries import closest_stops_query, lines_at_stop, lines_at_stop_area
+from server.queries import closest_stops_query, lines_at_stop, \
+    lines_at_stop_area, departures_at_stop
 
 
 class API:
@@ -96,7 +97,8 @@ class API:
 
         return self.__lines__(lines)
 
-    def __lines__(self, lines):
+    @staticmethod
+    def __lines__(lines):
         """
         Organises a list of lines into dictionaries
 
@@ -110,32 +112,65 @@ class API:
                 result[stop_code] = []
 
             lines_at_stop_arr = result[stop_code]
-            line['destination'] = {
-                'data_owner_code': line['data_owner_code'],
-                'code': line.pop('dest_code'),
-                'name': {
-                    'full': line.pop('dest_name_full'),
-                    'main': {
-                        'name': line.pop('dest_name_main'),
-                        'detail': line.pop('dest_name_detail'),
-                        'always_show_detail': line.pop('relevant_dest_name_detail')
-                    },
-                    21: {
-                        'name': line.pop('dest_name_main_21'),
-                        'detail': line.pop('dest_name_detail_21')
-                    },
-                    19: {
-                        'name': line.pop('dest_name_main_19'),
-                        'detail': line.pop('dest_name_detail_19')
-                    },
-                    16: {
-                        'name': line.pop('dest_name_main_16'),
-                        'detail': line.pop('dest_name_detail_16')
-                    },
-                }
-            }
+            line['destination'] = API.extract_destination(line)
 
             lines_at_stop_arr.append(line)
 
-        return list(result.values())
+        return result.values()
 
+    def departures_at_stop(self, data_owner_code, stop_code):
+        departures = self.db.dict_query(departures_at_stop, {
+            'data_owner_code': data_owner_code,
+            'user_stop_code': stop_code
+        })
+
+        return self.__departures__(departures)
+
+    def __departures__(self, departures):
+        """
+        Extracts the departures from the items
+        :param departures: The departure data
+        :return: A list of departures
+        """
+
+        for departure in departures:
+            departure['destination'] = self.extract_destination(departure)
+
+        return departures
+
+    @staticmethod
+    def extract_destination(item):
+        """
+        Extracts the destination from the item
+        :param item: The destination data. The destination data will be
+        removed from the original data.
+        :type item: dict[String, Any]
+        :return: A dictionary with the formatted destination data
+        :rtype: dict[String, Any]
+        """
+
+        return {
+                'data_owner_code': item['data_owner_code'],
+                'code': item.pop('dest_code'),
+                'name': {
+                    'full': item.pop('dest_name_full'),
+                    'main': {
+                        'name': item.pop('dest_name_main'),
+                        'detail': item.pop('dest_name_detail'),
+                        'always_show_detail':
+                            item.pop('relevant_dest_name_detail')
+                    },
+                    21: {
+                        'name': item.pop('dest_name_main_21'),
+                        'detail': item.pop('dest_name_detail_21')
+                    },
+                    19: {
+                        'name': item.pop('dest_name_main_19'),
+                        'detail': item.pop('dest_name_detail_19')
+                    },
+                    16: {
+                        'name': item.pop('dest_name_main_16'),
+                        'detail': item.pop('dest_name_detail_16')
+                    },
+                }
+            }
